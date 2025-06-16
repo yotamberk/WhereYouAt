@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { ADMINS, WORKERS, MANAGERS } from "../consts";
+import { ADMINS, PEOPLE, MANAGERS } from "../consts";
 
 export default function Login() {
   const [userId, setUserId] = useState("");
@@ -10,7 +10,7 @@ export default function Login() {
   function isValidUser(id: string) {
     return (
       ADMINS.includes(id) ||
-      WORKERS.includes(id) ||
+      PEOPLE.includes(id) ||
       MANAGERS.some((m) => m.id === id)
     );
   }

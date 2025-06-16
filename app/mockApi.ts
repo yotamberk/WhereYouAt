@@ -1,9 +1,9 @@
-import { MANAGERS, WORKERS, ADMINS, LOCATION_OPTIONS } from "./consts";
+import { MANAGERS, PEOPLE, ADMINS, SITE_OPTIONS } from "./consts";
 
 const STATUS_OPTIONS = ["At Home", "At Work", "On Vacation", "In Transit"];
 
-function getRandomLocation() {
-  return LOCATION_OPTIONS[Math.floor(Math.random() * LOCATION_OPTIONS.length)];
+function getRandomSite() {
+  return SITE_OPTIONS[Math.floor(Math.random() * SITE_OPTIONS.length)];
 }
 
 function getRandomPastDate() {
@@ -13,86 +13,80 @@ function getRandomPastDate() {
   return new Date(past).toISOString();
 }
 
-// Initial mock data for workers
-const initialLocations: {
-  [id: string]: { currentLocation: string; updatedAt: string | null };
+// Initial mock data for people
+const initialSites: {
+  [id: string]: { currentSite: string; updatedAt: string | null };
 } = {};
-[...WORKERS].forEach((worker) => {
-  initialLocations[worker] = {
-    currentLocation: getRandomLocation(),
+[...PEOPLE].forEach((person) => {
+  initialSites[person] = {
+    currentSite: getRandomSite(),
     updatedAt: getRandomPastDate(),
   };
 });
 
-// Global mock data state for workers
-let mockWorkerLocations: {
-  [id: string]: { currentLocation: string; updatedAt: string | null };
+// Global mock data state for people
+let mockPersonSites: {
+  [id: string]: { currentSite: string; updatedAt: string | null };
 } = {
-  ...initialLocations,
+  ...initialSites,
 };
 
-// Global mock data state for user locations (by userId)
-let mockUserLocations: {
-  [id: string]: { currentLocation: string; updatedAt: string | null };
+// Global mock data state for user sites (by userId)
+let mockUserSites: {
+  [id: string]: { currentSite: string; updatedAt: string | null };
 } = {};
 
-export async function getWorkersData(userId: string) {
+export async function getPeopleData(userId: string) {
   // Simulate network delay
   await new Promise((res) => setTimeout(res, 200));
-  // Determine which workers to return based on user role
+  // Determine which people to return based on user role
   if (ADMINS.includes(userId)) {
-    // Admins see all managers and their workers
+    // Admins see all managers and their people
     return MANAGERS.flatMap((m) =>
-      m.workers.map((w) => ({
+      m.people.map((p) => ({
         manager: m.id,
-        worker: w,
-        ...mockWorkerLocations[w],
+        person: p,
+        ...mockPersonSites[p],
       }))
     );
   }
   const manager = MANAGERS.find((m) => m.id === userId);
   if (manager) {
-    return manager.workers.map((w) => ({
+    return manager.people.map((p) => ({
       manager: userId,
-      worker: w,
-      ...mockWorkerLocations[w],
+      person: p,
+      ...mockPersonSites[p],
     }));
   }
   return [];
 }
 
-export async function updateWorkerLocation(
-  workerId: string,
-  currentLocation: string
-) {
+export async function updatePersonSite(personId: string, currentSite: string) {
   await new Promise((res) => setTimeout(res, 200));
-  mockWorkerLocations[workerId] = {
-    currentLocation,
+  mockPersonSites[personId] = {
+    currentSite,
     updatedAt: new Date().toISOString(),
   };
-  return mockWorkerLocations[workerId];
+  return mockPersonSites[personId];
 }
 
-export async function getUserLocation(userId: string) {
+export async function getUserSite(userId: string) {
   await new Promise((res) => setTimeout(res, 200));
-  if (!mockUserLocations[userId]) {
+  if (!mockUserSites[userId]) {
     // Initialize if not present
-    mockUserLocations[userId] = {
-      currentLocation: getRandomLocation(),
+    mockUserSites[userId] = {
+      currentSite: getRandomSite(),
       updatedAt: getRandomPastDate(),
     };
   }
-  return mockUserLocations[userId];
+  return mockUserSites[userId];
 }
 
-export async function updateUserLocation(
-  userId: string,
-  currentLocation: string
-) {
+export async function updateUserSite(userId: string, currentSite: string) {
   await new Promise((res) => setTimeout(res, 200));
-  mockUserLocations[userId] = {
-    currentLocation,
+  mockUserSites[userId] = {
+    currentSite,
     updatedAt: new Date().toISOString(),
   };
-  return mockUserLocations[userId];
+  return mockUserSites[userId];
 }

@@ -1,25 +1,20 @@
 // List of admin user IDs
 export const ADMINS = ["admin1", "admin2"];
 
-// List of workers
-export const WORKERS = ["worker1", "worker2", "worker3", "worker4"];
+// List of people
+export const PEOPLE = ["person1", "person2", "person3", "person4"];
 
-// Managers and their workers
+// Managers and their people
 export const MANAGERS = [
   {
     id: "manager1",
-    workers: ["worker1", "worker2"],
+    people: ["person1", "person2"],
   },
   {
     id: "manager2",
-    workers: ["worker3", "worker4"],
+    people: ["person3", "person4"],
   },
 ];
 
-// List of possible locations
-export const LOCATION_OPTIONS = [
-  "At Home",
-  "At Work",
-  "On Vacation",
-  "In Transit",
-];
+// List of possible sites
+export const SITE_OPTIONS = ["At Home", "At Work", "On Vacation", "In Transit"];
