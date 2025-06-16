@@ -1,6 +1,11 @@
 import { useState, useEffect } from "react";
 import { ADMINS, MANAGERS, WORKERS, LOCATION_OPTIONS } from "../consts";
-import { getWorkersData, updateWorkerLocation } from "../mockApi";
+import {
+  getWorkersData,
+  updateWorkerLocation,
+  getUserLocation,
+  updateUserLocation,
+} from "../mockApi";
 import * as XLSX from "xlsx";
 
 function getUserRole(userId: string) {
@@ -8,20 +13,6 @@ function getUserRole(userId: string) {
   if (MANAGERS.some((m) => m.id === userId)) return "manager";
   if (WORKERS.includes(userId)) return "worker";
   return null;
-}
-
-function getUserLocation() {
-  const data = localStorage.getItem("user_location");
-  if (!data) return { currentLocation: "", updatedAt: null };
-  try {
-    const parsed = JSON.parse(data);
-    return {
-      currentLocation: parsed.currentLocation || "",
-      updatedAt: parsed.updatedAt || null,
-    };
-  } catch {
-    return { currentLocation: data, updatedAt: null };
-  }
 }
 
 function setUserLocation(currentLocation: string) {
@@ -47,10 +38,12 @@ export default function WhereYouAt() {
   useEffect(() => {
     const id = localStorage.getItem("login_token") || "";
     setUserId(id);
-    const userLoc = getUserLocation();
-    setCurrentLocation(userLoc.currentLocation);
-    setSelected(userLoc.currentLocation);
-    setUpdatedAt(userLoc.updatedAt);
+    // Fetch user location from mock API
+    getUserLocation(id).then((userLoc) => {
+      setCurrentLocation(userLoc.currentLocation);
+      setSelected(userLoc.currentLocation);
+      setUpdatedAt(userLoc.updatedAt);
+    });
     // Fetch workers data if admin or manager
     const role = getUserRole(id);
     if (role === "admin" || role === "manager") {
@@ -72,11 +65,11 @@ export default function WhereYouAt() {
     }
   }, []);
 
-  function handleSave(e: React.FormEvent) {
+  async function handleSave(e: React.FormEvent) {
     e.preventDefault();
-    setUserLocation(selected);
-    setCurrentLocation(selected);
-    setUpdatedAt(new Date().toISOString());
+    const updated = await updateUserLocation(userId, selected);
+    setCurrentLocation(updated.currentLocation);
+    setUpdatedAt(updated.updatedAt);
   }
 
   function handleWorkerLocationChange(workerId: string, value: string) {
