@@ -7,6 +7,7 @@ import {
   updateUserSite,
 } from "../mockApi";
 import * as XLSX from "xlsx";
+import PersonCard from "./PersonCard";
 
 function getUserRole(userId: string) {
   if (ADMINS.includes(userId)) return "admin";
@@ -122,10 +123,15 @@ export default function WhereYouAt() {
           </div>
         )}
       </div>
-      <form onSubmit={handleSave} className="flex flex-col gap-4 items-center">
+      <form className="flex flex-row items-center">
         <select
           value={selected}
-          onChange={(e) => setSelected(e.target.value)}
+          onChange={async (e) => {
+            setSelected(e.target.value);
+            const updated = await updateUserSite(userId, e.target.value);
+            setCurrentSite(updated.currentSite);
+            setUpdatedAt(updated.updatedAt);
+          }}
           className="border p-2 rounded w-64"
         >
           <option value="" disabled>
@@ -137,12 +143,6 @@ export default function WhereYouAt() {
             </option>
           ))}
         </select>
-        <button
-          type="submit"
-          className="bg-blue-500 text-white p-2 rounded w-32"
-        >
-          Save
-        </button>
       </form>
       {(role === "admin" || role === "manager") && (
         <div className="mt-8 w-full max-w-2xl">
@@ -159,63 +159,27 @@ export default function WhereYouAt() {
           {loading ? (
             <div className="text-center py-8">Loading...</div>
           ) : (
-            <table className="min-w-full border">
-              <thead>
-                <tr>
-                  {role === "admin" && (
-                    <th className="border px-4 py-2">Manager</th>
-                  )}
-                  <th className="border px-4 py-2">Person ID</th>
-                  <th className="border px-4 py-2">Current Site</th>
-                  <th className="border px-4 py-2">Last Updated</th>
-                  <th className="border px-4 py-2">Action</th>
-                </tr>
-              </thead>
-              <tbody>
-                {people.map(({ manager, person }) => (
-                  <tr key={person}>
-                    {role === "admin" && (
-                      <td className="border px-4 py-2">{manager}</td>
-                    )}
-                    <td className="border px-4 py-2">{person}</td>
-                    <td className="border px-4 py-2">
-                      <select
-                        value={personSites[person]?.currentSite || ""}
-                        onChange={(e) =>
-                          handlePersonSiteChange(person, e.target.value)
-                        }
-                        className="border p-1 rounded"
-                      >
-                        <option value="" disabled>
-                          Select site
-                        </option>
-                        {SITE_OPTIONS.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="border px-4 py-2 text-xs text-gray-500">
-                      {personSites[person]?.updatedAt
-                        ? new Date(
-                            personSites[person].updatedAt!
-                          ).toLocaleString()
-                        : "-"}
-                    </td>
-                    <td className="border px-4 py-2">
-                      <button
-                        className="bg-blue-500 text-white px-3 py-1 rounded"
-                        onClick={() => handlePersonSiteSave(person)}
-                        disabled={saving[person]}
-                      >
-                        {saving[person] ? "Saving..." : "Save"}
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+            <div className="flex flex-col gap-4 p-4 overflow-x-auto whitespace-nowrap">
+              {people.map(({ manager, person }) => (
+                <PersonCard
+                  key={person}
+                  personId={person}
+                  site={personSites[person]?.currentSite || ""}
+                  updatedAt={personSites[person]?.updatedAt || null}
+                  siteOptions={SITE_OPTIONS}
+                  saving={saving[person]}
+                  onSiteChange={async (newSite) => {
+                    setSaving((prev) => ({ ...prev, [person]: true }));
+                    const updated = await updatePersonSite(person, newSite);
+                    setPersonSites((prev) => ({
+                      ...prev,
+                      [person]: { ...prev[person], ...updated },
+                    }));
+                    setSaving((prev) => ({ ...prev, [person]: false }));
+                  }}
+                />
+              ))}
+            </div>
           )}
         </div>
       )}
