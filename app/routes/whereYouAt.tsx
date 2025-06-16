@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ADMINS, MANAGERS, WORKERS, LOCATION_OPTIONS } from "../consts";
 import { getWorkersData, updateWorkerLocation } from "../mockApi";
+import * as XLSX from "xlsx";
 
 function getUserRole(userId: string) {
   if (ADMINS.includes(userId)) return "admin";
@@ -98,6 +99,23 @@ export default function WhereYouAt() {
     setSaving((prev) => ({ ...prev, [workerId]: false }));
   }
 
+  function handleExportExcel() {
+    if (!workers.length) return;
+    const role = getUserRole(userId);
+    const data = workers.map(({ manager, worker }) => ({
+      ...(role === "admin" ? { Manager: manager } : {}),
+      "Worker ID": worker,
+      "Current Location": workerLocations[worker]?.currentLocation || "",
+      "Last Updated": workerLocations[worker]?.updatedAt
+        ? new Date(workerLocations[worker].updatedAt!).toLocaleString()
+        : "-",
+    }));
+    const ws = XLSX.utils.json_to_sheet(data);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Workers");
+    XLSX.writeFile(wb, "workers.xlsx");
+  }
+
   const role = getUserRole(userId);
 
   return (
@@ -138,6 +156,15 @@ export default function WhereYouAt() {
       </form>
       {(role === "admin" || role === "manager") && (
         <div className="mt-8 w-full max-w-2xl">
+          <div className="flex justify-end mb-2">
+            <button
+              className="bg-green-600 text-white px-4 py-2 rounded"
+              onClick={handleExportExcel}
+              disabled={loading || !workers.length}
+            >
+              Export to Excel
+            </button>
+          </div>
           <h2 className="text-xl font-bold mb-4 text-center">Workers</h2>
           {loading ? (
             <div className="text-center py-8">Loading...</div>
