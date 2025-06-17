@@ -114,3 +114,27 @@ export async function addNewPerson(managerId: string, personId: string) {
 
   return { manager: managerId, person: personId };
 }
+
+export async function deletePerson(personId: string) {
+  // Simulate API call
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  // Remove from PEOPLE array
+  const index = PEOPLE.indexOf(personId);
+  if (index > -1) {
+    PEOPLE.splice(index, 1);
+  }
+
+  // Remove from manager's people list
+  MANAGERS.forEach((manager) => {
+    const personIndex = manager.people.indexOf(personId);
+    if (personIndex > -1) {
+      manager.people.splice(personIndex, 1);
+    }
+  });
+
+  // Remove from mockPersonSites
+  delete mockPersonSites[personId];
+
+  return { success: true };
+}

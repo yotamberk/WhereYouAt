@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { addNewPerson } from "../mockApi";
+import { useAddNewPerson } from "../hooks/useQueries";
 
 interface PersonModalProps {
   isOpen: boolean;
@@ -13,26 +13,26 @@ export default function PersonModal({
   userId,
 }: PersonModalProps) {
   const [newPersonId, setNewPersonId] = useState("");
-  const [isSaving, setIsSaving] = useState(false);
+  const addPersonMutation = useAddNewPerson();
 
   const handleSave = async () => {
     if (!newPersonId.trim()) return;
-    setIsSaving(true);
     try {
-      await addNewPerson(userId, newPersonId.trim());
+      await addPersonMutation.mutateAsync({
+        managerId: userId,
+        personId: newPersonId.trim(),
+      });
       setNewPersonId("");
       onClose();
     } catch (error) {
       console.error("Failed to add person:", error);
-    } finally {
-      setIsSaving(false);
     }
   };
 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-40 flex items-center justify-center">
+    <div className="fixed inset-0 p-2 bg-black/50 z-40 flex items-center justify-center">
       <div className="bg-white p-6 rounded-lg shadow-xl w-96">
         <h2 className="text-xl font-bold mb-4">Add New Person</h2>
         <div className="mb-4">
@@ -61,9 +61,9 @@ export default function PersonModal({
           <button
             className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 disabled:opacity-50"
             onClick={handleSave}
-            disabled={isSaving || !newPersonId.trim()}
+            disabled={addPersonMutation.isPending || !newPersonId.trim()}
           >
-            {isSaving ? "Saving..." : "Save"}
+            {addPersonMutation.isPending ? "Saving..." : "Save"}
           </button>
         </div>
       </div>

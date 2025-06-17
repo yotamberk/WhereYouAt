@@ -9,6 +9,7 @@ import {
   useLocation,
   useNavigate,
 } from "react-router";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import type { Route } from "./+types/root";
 import "./app.css";
@@ -52,6 +53,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
   );
 }
 
+const queryClient = new QueryClient();
+
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -67,9 +70,11 @@ export default function App() {
     return <Outlet />;
   }
   return (
-    <AppLayout>
-      <Outlet />
-    </AppLayout>
+    <QueryClientProvider client={queryClient}>
+      <AppLayout>
+        <Outlet />
+      </AppLayout>
+    </QueryClientProvider>
   );
 }
 
