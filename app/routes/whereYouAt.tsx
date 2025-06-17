@@ -8,6 +8,7 @@ import {
 } from "../mockApi";
 import * as XLSX from "xlsx";
 import PersonCard from "./PersonCard";
+import Drawer from "./Drawer";
 
 function getUserRole(userId: string) {
   if (ADMINS.includes(userId)) return "admin";
@@ -90,7 +91,7 @@ export default function WhereYouAt() {
     setSaving((prev) => ({ ...prev, [personId]: false }));
   }
 
-  function handleExportExcel() {
+  const handleExportExcel = () => {
     if (!people.length) return;
     const role = getUserRole(userId);
     const data = people.map(({ manager, person }) => ({
@@ -105,84 +106,71 @@ export default function WhereYouAt() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "People");
     XLSX.writeFile(wb, "people.xlsx");
-  }
+  };
 
   const role = getUserRole(userId);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen gap-8">
-      <div className="text-center">
-        <div className="text-lg font-bold">User ID: {userId}</div>
-        <div className="text-md mt-2">
-          Current Site:{" "}
-          <span className="font-semibold">{currentSite || "(none)"}</span>
+    <>
+      <header className="fixed top-0 w-full bg-white shadow flex items-center h-16 px-4 z-10">
+        <Drawer
+          userId={userId}
+          role={role}
+          loading={loading}
+          people={people}
+          personSites={personSites}
+        />
+        <div className="ml-4 font-bold text-xl">Where You At</div>
+      </header>
+      {/* Main content */}
+      <div className="flex flex-col items-center justify-center min-h-screen relative w-full">
+        <div className="w-full  p-4">
+          <PersonCard
+            personId={userId}
+            site={currentSite}
+            updatedAt={updatedAt}
+            siteOptions={SITE_OPTIONS}
+            onSiteChange={async (newSite) => {
+              setSelected(newSite);
+              const updated = await updateUserSite(userId, newSite);
+              setCurrentSite(updated.currentSite);
+              setUpdatedAt(updated.updatedAt);
+            }}
+            saving={false}
+          />
         </div>
-        {updatedAt && (
-          <div className="text-xs text-gray-500 mt-1">
-            Last updated: {new Date(updatedAt).toLocaleString()}
+
+        {(role === "admin" || role === "manager") && (
+          <div className="mt-8 w-full max-w-2xl">
+            <h2 className="text-xl font-bold mb-4 text-center">People</h2>
+            {loading ? (
+              <div className="text-center py-8">Loading...</div>
+            ) : (
+              <div className="flex flex-col gap-4 p-4 overflow-x-auto whitespace-nowrap">
+                {people.map(({ manager, person }) => (
+                  <PersonCard
+                    key={person}
+                    personId={person}
+                    site={personSites[person]?.currentSite || ""}
+                    updatedAt={personSites[person]?.updatedAt || null}
+                    siteOptions={SITE_OPTIONS}
+                    saving={saving[person]}
+                    onSiteChange={async (newSite) => {
+                      setSaving((prev) => ({ ...prev, [person]: true }));
+                      const updated = await updatePersonSite(person, newSite);
+                      setPersonSites((prev) => ({
+                        ...prev,
+                        [person]: { ...prev[person], ...updated },
+                      }));
+                      setSaving((prev) => ({ ...prev, [person]: false }));
+                    }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
-      <form className="flex flex-row items-center">
-        <select
-          value={selected}
-          onChange={async (e) => {
-            setSelected(e.target.value);
-            const updated = await updateUserSite(userId, e.target.value);
-            setCurrentSite(updated.currentSite);
-            setUpdatedAt(updated.updatedAt);
-          }}
-          className="border p-2 rounded w-64"
-        >
-          <option value="" disabled>
-            Select your site
-          </option>
-          {SITE_OPTIONS.map((opt) => (
-            <option key={opt} value={opt}>
-              {opt}
-            </option>
-          ))}
-        </select>
-      </form>
-      {(role === "admin" || role === "manager") && (
-        <div className="mt-8 w-full max-w-2xl">
-          <div className="flex justify-end mb-2">
-            <button
-              className="bg-green-600 text-white px-4 py-2 rounded"
-              onClick={handleExportExcel}
-              disabled={loading || !people.length}
-            >
-              Export to Excel
-            </button>
-          </div>
-          <h2 className="text-xl font-bold mb-4 text-center">People</h2>
-          {loading ? (
-            <div className="text-center py-8">Loading...</div>
-          ) : (
-            <div className="flex flex-col gap-4 p-4 overflow-x-auto whitespace-nowrap">
-              {people.map(({ manager, person }) => (
-                <PersonCard
-                  key={person}
-                  personId={person}
-                  site={personSites[person]?.currentSite || ""}
-                  updatedAt={personSites[person]?.updatedAt || null}
-                  siteOptions={SITE_OPTIONS}
-                  saving={saving[person]}
-                  onSiteChange={async (newSite) => {
-                    setSaving((prev) => ({ ...prev, [person]: true }));
-                    const updated = await updatePersonSite(person, newSite);
-                    setPersonSites((prev) => ({
-                      ...prev,
-                      [person]: { ...prev[person], ...updated },
-                    }));
-                    setSaving((prev) => ({ ...prev, [person]: false }));
-                  }}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-    </div>
+    </>
   );
 }

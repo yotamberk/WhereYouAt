@@ -90,3 +90,27 @@ export async function updateUserSite(userId: string, currentSite: string) {
   };
   return mockUserSites[userId];
 }
+
+export async function addNewPerson(managerId: string, personId: string) {
+  // Simulate API call
+  await new Promise((resolve) => setTimeout(resolve, 500));
+
+  // Add person to PEOPLE array if not already present
+  if (!PEOPLE.includes(personId)) {
+    PEOPLE.push(personId);
+  }
+
+  // Add person to the manager's people list
+  const manager = MANAGERS.find((m) => m.id === managerId);
+  if (manager && !manager.people.includes(personId)) {
+    manager.people.push(personId);
+  }
+
+  // Initialize the person's site data
+  mockPersonSites[personId] = {
+    currentSite: getRandomSite(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return { manager: managerId, person: personId };
+}

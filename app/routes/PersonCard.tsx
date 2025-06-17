@@ -30,7 +30,7 @@ export default function PersonCard({
 }: PersonCardProps) {
   const dotColor = isToday(updatedAt) ? "bg-green-500" : "bg-red-500";
   return (
-    <div className="flex items-center gap-4 border rounded-lg p-4 shadow mb-4 bg-white">
+    <div className="flex items-center gap-4 border rounded-lg p-4 shadow bg-white w-full">
       <div
         className={`w-3 h-3 rounded-full ${dotColor}`}
         title={isToday(updatedAt) ? "Updated today" : "Not updated today"}
@@ -42,8 +42,9 @@ export default function PersonCard({
           <select
             value={site}
             onChange={(e) => onSiteChange(e.target.value)}
-            className="border p-1 rounded"
+            className="border p-1 rounded flex-1"
             disabled={saving}
+            name="site"
           >
             <option value="" disabled>
               Select site

@@ -45,21 +45,8 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 function AppLayout({ children }: { children: React.ReactNode }) {
-  const navigate = useNavigate();
-  function handleLogout() {
-    localStorage.removeItem("login_token");
-    navigate("/login", { replace: true });
-  }
   return (
     <div>
-      <header className="flex justify-end p-4">
-        <button
-          onClick={handleLogout}
-          className="bg-red-500 text-white px-4 py-2 rounded"
-        >
-          Logout
-        </button>
-      </header>
       <main>{children}</main>
     </div>
   );
