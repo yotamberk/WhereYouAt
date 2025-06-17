@@ -3,6 +3,7 @@ import { ADMINS, MANAGERS, PEOPLE, SITE_OPTIONS } from "../consts";
 import * as XLSX from "xlsx";
 import PersonCard from "./PersonCard";
 import Drawer from "./Drawer";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   usePeopleData,
   useUserSite,
@@ -19,6 +20,7 @@ function getUserRole(userId: string) {
 export default function WhereYouAt() {
   const [userId, setUserId] = useState("");
   const [selected, setSelected] = useState("");
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const id = localStorage.getItem("login_token") || "";

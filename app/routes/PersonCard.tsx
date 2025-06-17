@@ -42,6 +42,7 @@ export default function PersonCard({
       personId,
       currentSite: newSite,
     });
+    onSiteChange?.(newSite);
   };
 
   const handleDelete = async () => {
@@ -104,9 +105,6 @@ export default function PersonCard({
                 </option>
               ))}
             </select>
-            {saving && (
-              <span className="text-xs text-gray-400 ml-2">Saving...</span>
-            )}
           </div>
           <div className="text-xs text-gray-500">
             Last updated:{" "}
