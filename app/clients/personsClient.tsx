@@ -5,9 +5,7 @@ import { MANAGERS, PEOPLE, ADMINS, SITE_OPTIONS } from '../consts';
 const STATUS_OPTIONS = ['At Home', 'At Work', 'On Vacation', 'In Transit'];
 
 export async function getPeopleData(userId: string) {
-	const { data } = await axios.get(
-		'https://person-management-b7hve6ftb9b6cfh8.westeurope-01.azurewebsites.net/users'
-	);
+	const { data } = await axios.get('http://localhost:3000/users');
 
 	const [user, people] = (data as []).reduce(
 		(acc: Person[][], person: Person) => {
@@ -22,4 +20,69 @@ export async function getPeopleData(userId: string) {
 	);
 
 	return { user: user[0], people };
+}
+
+export async function getPerson(userId: string) {
+	const { data }: { data: Person } = await axios.get(
+		`http://localhost:3000/users${userId}`
+	);
+
+	return data;
+}
+
+export async function updateAlertStatus(userId: string, status: string) {
+	const response = await axios.post(
+		`https://person-management-b7hve6ftb9b6cfh8.westeurope-01.azurewebsites.net/users/alert/${userId}`,
+		{
+			status,
+		}
+	);
+
+	return;
+}
+
+export async function updatMoveStatus(
+	userId: string,
+	originator: string,
+	status: boolean
+) {
+	const response = await axios.put(
+		`https://person-management-b7hve6ftb9b6cfh8.westeurope-01.azurewebsites.net/users/${userId}/move`,
+		{
+			status,
+			originator,
+		}
+	);
+
+	return;
+}
+
+export async function postMoveStatus(
+	userId: string,
+	origin: string,
+	target: string
+) {
+	const response = await axios.post(
+		`https://person-management-b7hve6ftb9b6cfh8.westeurope-01.azurewebsites.net/users/${userId}/move`,
+		{
+			origin,
+			target,
+			field: 'site',
+		}
+	);
+
+	return;
+}
+
+export async function updateReportStatus(
+	userId: string,
+	status: string,
+	location: string
+) {
+	const response = await axios.put(`/users/${userId}/status`, {
+		status,
+		location,
+	});
+
+	return;
 }

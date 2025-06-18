@@ -9,6 +9,7 @@ import {
 	Collapse,
 	Box,
 	Stack,
+	Modal,
 } from '@mui/material';
 import {
 	ExpandMore as ExpandMoreIcon,
@@ -20,6 +21,7 @@ import {
 } from '@mui/icons-material';
 
 import type { Person } from '../../../types';
+import ActionModal from './ActionModal/ActionModal';
 
 const defaultPerson: Person = {
 	id: '13123123',
@@ -38,6 +40,8 @@ const PersonCard = ({
 	active = false,
 }) => {
 	const [expanded, setExpanded] = useState(isUser || active);
+	const [openModal, setOpenModal] = useState(false);
+	const [action, setAction] = useState('');
 	const {
 		name,
 		site,
@@ -53,7 +57,8 @@ const PersonCard = ({
 
 	const handleButtonClick = (action: string, event: SyntheticEvent) => {
 		event.stopPropagation();
-		alert(`${action} clicked for ${name}`);
+		setAction(action);
+		setOpenModal(true);
 	};
 
 	return (
@@ -61,11 +66,6 @@ const PersonCard = ({
 			elevation={2}
 			sx={{
 				width: 350,
-				transition: 'all 0.3s ease',
-				'&:hover': {
-					transform: 'translateY(-4px)',
-					elevation: 8,
-				},
 			}}
 		>
 			{/* Header Section */}
@@ -128,28 +128,28 @@ const PersonCard = ({
 							variant="contained"
 							disabled={alertStatus === 'good'}
 							color="error"
-							onClick={(e) => handleButtonClick('Call', e)}
+							onClick={(e) => handleButtonClick('Alert', e)}
 							sx={{ flexGrow: 1, borderRadius: 0 }}
 						>
 							<Warning />
 						</Button>
 						<Button
 							variant="contained"
-							onClick={(e) => handleButtonClick('Call', e)}
+							onClick={(e) => handleButtonClick('Report', e)}
 							sx={{ flexGrow: 1, borderRadius: 0 }}
 						>
 							<Campaign />
 						</Button>
 						<Button
 							variant="contained"
-							onClick={(e) => handleButtonClick('Call', e)}
+							onClick={(e) => handleButtonClick('Move', e)}
 							sx={{ flexGrow: 1, borderRadius: 0 }}
 						>
 							<Shuffle />
 						</Button>
 						<Button
 							variant="contained"
-							onClick={(e) => handleButtonClick('Call', e)}
+							onClick={(e) => handleButtonClick('More', e)}
 							sx={{ flexGrow: 1, borderRadius: 0 }}
 						>
 							<MoreVert />
@@ -157,6 +157,13 @@ const PersonCard = ({
 					</Stack>
 				</CardContent>
 			</Collapse>
+
+			<ActionModal
+				person={person}
+				action={action}
+				openModal={openModal}
+				onClose={() => setOpenModal(false)}
+			/>
 		</Card>
 	);
 };

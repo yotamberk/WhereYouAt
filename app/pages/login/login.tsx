@@ -23,7 +23,7 @@ export default function Login() {
 			return;
 		}
 		localStorage.setItem('login_token', userId.trim());
-		navigate('/whereYouAt', { replace: true });
+		navigate('/', { replace: true });
 	}
 
 	return (
