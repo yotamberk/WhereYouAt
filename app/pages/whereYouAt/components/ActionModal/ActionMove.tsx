@@ -3,13 +3,8 @@ import { Button, Stack, TextField, Typography } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
 
 import type { Person } from '../../../../types';
-import {
-	getPerson,
-	postMoveStatus,
-	updateAlertStatus,
-	updateReportStatus,
-	updatMoveStatus,
-} from '~/clients/personsClient';
+import { getPerson } from '~/clients/personsClient';
+import { usePostMoveStatus, useUpdateMoveStatus } from '~/hooks/useQueries';
 
 const MoveAction = ({
 	person,
@@ -28,6 +23,9 @@ const MoveAction = ({
 		isPersonnelManager: false,
 	});
 
+	const postMoveStatusMutation = usePostMoveStatus();
+	const updateMoveStatusMutation = useUpdateMoveStatus();
+
 	// Load permissions on component mount
 	React.useEffect(() => {
 		const loadPermissions = async () => {
@@ -42,9 +40,9 @@ const MoveAction = ({
 
 			if (transaction) {
 				user.personRoles?.forEach(({ role }) => {
-					if (userId === person.manager)
+					if (userId === person.manager?.id)
 						newPermissions.isPersonnelManager = true;
-					if (role.name === 'hrManager' || role.name === 'hrManager')
+					if (role.name === 'hrManager' || role.name === 'admin')
 						newPermissions.isHrManager = true;
 					if (role.name === 'siteManager') {
 						if (
@@ -72,8 +70,14 @@ const MoveAction = ({
 
 	const handleButtonClick = (event: SyntheticEvent) => {
 		event.stopPropagation();
-		postMoveStatus(id, origin, target);
-		onClose();
+		postMoveStatusMutation.mutate(
+			{ userId: id, origin, target },
+			{
+				onSuccess: () => {
+					onClose();
+				},
+			}
+		);
 	};
 
 	const handleConfirmButtonClick = (
@@ -81,8 +85,14 @@ const MoveAction = ({
 		event: SyntheticEvent
 	) => {
 		event.stopPropagation();
-		updatMoveStatus(id, originator, true);
-		onClose();
+		updateMoveStatusMutation.mutate(
+			{ userId: id, originator, status: true },
+			{
+				onSuccess: () => {
+					onClose();
+				},
+			}
+		);
 	};
 
 	const handleChange = (e: ChangeEvent<HTMLInputElement>, setter: Function) => {
@@ -91,6 +101,11 @@ const MoveAction = ({
 	};
 
 	const isButtonDisabled = (originator: string) => {
+		// Check if confirmation has already been made
+		if (originator === 'origin' && transaction?.originConfirmation) return true;
+		if (originator === 'target' && transaction?.targetConfirmation) return true;
+
+		// Check permissions
 		if (
 			transaction?.origin === 'other' &&
 			(!permissions.isPersonnelManager || !permissions.isOriginManager)
@@ -101,68 +116,100 @@ const MoveAction = ({
 			(!permissions.isPersonnelManager || !permissions.isTargetManager)
 		)
 			return false;
-		if (originator === 'origin' && permissions.isOriginManager) return true;
-		if (originator === 'target' && permissions.isTargetManager) return true;
-		return false;
+		if (
+			originator === 'origin' &&
+			(permissions.isOriginManager || permissions.isHrManager)
+		)
+			return false;
+		if (
+			originator === 'target' &&
+			(permissions.isTargetManager || permissions.isHrManager)
+		)
+			return false;
+		return true;
 	};
+
+	const isLoading =
+		postMoveStatusMutation.isPending || updateMoveStatusMutation.isPending;
+
+	// Check if we should show text inputs (no transaction or resolved transaction)
+	const shouldShowTextInputs =
+		!transaction || transaction.status === 'resolved';
+
+	// Check if we should show confirmation buttons (pending transaction)
+	const shouldShowConfirmationButtons =
+		transaction && transaction.status === 'pending';
 
 	return (
 		<Stack spacing={3} sx={{ minWidth: 300 }}>
 			<Typography variant="h6" component="h2" gutterBottom>
-				Move Action
+				Move Person
 			</Typography>
 
-			{transaction && transaction.status === 'pending' && (
+			{shouldShowTextInputs && (
 				<Stack spacing={2}>
-					<Typography variant="subtitle1">Confirm Transaction</Typography>
-					<Stack direction="row" spacing={2} justifyContent="center">
+					<TextField
+						label="Origin"
+						fullWidth
+						value={origin}
+						onChange={(e: ChangeEvent<HTMLInputElement>) =>
+							handleChange(e, setOrigin)
+						}
+					/>
+					<TextField
+						label="Target"
+						fullWidth
+						value={target}
+						onChange={(e: ChangeEvent<HTMLInputElement>) =>
+							handleChange(e, setTarget)
+						}
+					/>
+				</Stack>
+			)}
+
+			{shouldShowConfirmationButtons && (
+				<Stack spacing={2}>
+					<Typography variant="body2" color="text.secondary">
+						Awaiting confirmation for move from {transaction.origin} to{' '}
+						{transaction.target}
+					</Typography>
+
+					<Stack direction="row" spacing={2}>
 						<Button
-							variant="contained"
-							disabled={isButtonDisabled('origin')}
-							color={transaction.originConfirmation ? 'success' : 'info'}
+							variant="outlined"
+							startIcon={<Check />}
 							onClick={(e) => handleConfirmButtonClick('origin', e)}
+							disabled={isButtonDisabled('origin') || isLoading}
+							fullWidth
 						>
-							Origin
+							Origin Auth
 						</Button>
 						<Button
-							variant="contained"
-							disabled={isButtonDisabled('target')}
-							color={transaction.targetConfirmation ? 'success' : 'info'}
+							variant="outlined"
+							startIcon={<Check />}
 							onClick={(e) => handleConfirmButtonClick('target', e)}
+							disabled={isButtonDisabled('target') || isLoading}
+							fullWidth
 						>
-							Target
+							Target Auth
 						</Button>
 					</Stack>
 				</Stack>
 			)}
 
-			<Stack spacing={2}>
-				<Typography variant="subtitle1">Move Details</Typography>
-				<TextField
-					label="Origin"
-					fullWidth
-					value={origin}
-					onChange={(e: ChangeEvent<HTMLInputElement>) =>
-						handleChange(e, setOrigin)
-					}
-				/>
-				<TextField
-					label="Target"
-					fullWidth
-					value={target}
-					onChange={(e: ChangeEvent<HTMLInputElement>) =>
-						handleChange(e, setTarget)
-					}
-				/>
-			</Stack>
-
 			<Stack direction="row" spacing={2} justifyContent="flex-end">
 				<Button variant="outlined" onClick={onClose}>
 					Cancel
 				</Button>
-				<Button variant="contained" onClick={handleButtonClick}>
-					Submit
-				</Button>
+				{shouldShowTextInputs && (
+					<Button
+						variant="contained"
+						onClick={handleButtonClick}
+						disabled={isLoading}
+					>
+						Submit
+					</Button>
+				)}
 			</Stack>
 		</Stack>
 	);
